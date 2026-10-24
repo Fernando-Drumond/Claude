@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cervejas — Histórico e Avaliações</title>
+<meta name="description" content="Histórico pessoal das cervejas que você bebeu, com foto, quantidade e avaliação de 0 a 10.">
+<meta name="theme-color" content="#f5b700" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b130b" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cervejas">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1 id="topTitle">Biblioteca</h1>
+</header>
+
+<main id="main">
+
+  <!-- ══════════════ BIBLIOTECA ══════════════ -->
+  <section class="view" data-view="library">
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Buscar nome, cervejaria, estilo, local…" autocomplete="off" aria-label="Buscar">
+    </div>
+
+    <div class="seg" role="tablist" aria-label="Modo de exibição">
+      <button type="button" class="seg-btn active" data-mode="beers">Cervejas</button>
+      <button type="button" class="seg-btn" data-mode="timeline">Histórico</button>
+    </div>
+
+    <div class="filters">
+      <select id="fStyle" aria-label="Estilo"><option value="">Todos os estilos</option></select>
+      <select id="fTag" aria-label="Perfil">
+        <option value="">Qualquer perfil</option>
+      </select>
+      <select id="fMin" aria-label="Nota mínima">
+        <option value="">Qualquer nota</option>
+        <option value="9">Nota ≥ 9</option>
+        <option value="8">Nota ≥ 8</option>
+        <option value="7">Nota ≥ 7</option>
+        <option value="5">Nota ≥ 5</option>
+        <option value="-1">Sem avaliação</option>
+      </select>
+      <select id="fSort" aria-label="Ordenar">
+        <option value="recent">Mais recentes</option>
+        <option value="subjective">Maior nota geral</option>
+        <option value="technical">Maior nota técnica</option>
+        <option value="count">Mais bebidas</option>
+        <option value="abv">Maior teor alcoólico</option>
+        <option value="name">Nome (A–Z)</option>
+      </select>
+    </div>
+    <div class="result-bar">
+      <span id="resultCount"></span>
+      <button type="button" class="link" id="clearFilters" hidden>Limpar filtros</button>
+    </div>
+
+    <div id="libraryList" class="list"></div>
+
+    <div id="libraryEmpty" class="empty" hidden>
+      <div class="empty-art">🍺</div>
+      <h2>Sua biblioteca está vazia</h2>
+      <p>Registre a primeira cerveja para começar o histórico.</p>
+      <button class="btn primary" type="button" data-goto="add">Registrar cerveja</button>
+    </div>
+  </section>
+
+  <!-- ══════════════ CADASTRO ══════════════ -->
+  <section class="view" data-view="add" hidden>
+    <form id="addForm" novalidate>
+      <input type="hidden" id="beerId">
+      <input type="hidden" id="entryId">
+
+      <div class="card">
+        <label class="photo-pick" id="photoPick">
+          <input type="file" id="photoInput" accept="image/*" hidden>
+          <img id="photoPreview" alt="" hidden>
+          <span class="photo-empty" id="photoEmpty">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            Tirar ou escolher foto
+          </span>
+        </label>
+        <button type="button" class="link danger small" id="photoRemove" hidden>Remover foto</button>
+      </div>
+
+      <div class="card">
+        <h2>Cerveja</h2>
+        <div class="field">
+          <label for="name">Nome *</label>
+          <input id="name" required autocomplete="off" placeholder="Ex.: Colorado Appia">
+          <div id="nameSuggest" class="suggest" hidden></div>
+        </div>
+        <div id="existingNote" class="note" hidden>
+          Já está na biblioteca — este registro entra no histórico dela.
+          <button type="button" class="link" id="detachBeer">É outra cerveja</button>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label for="brewery">Cervejaria</label>
+            <input id="brewery" autocomplete="off" list="breweryList">
+          </div>
+          <div class="field">
+            <label for="style">Estilo</label>
+            <input id="style" autocomplete="off" list="styleList" placeholder="IPA, Pilsen…">
+          </div>
+          <div class="field">
+            <label for="abv">Teor (% ABV)</label>
+            <input id="abv" type="text" inputmode="decimal" placeholder="5,5">
+          </div>
+          <div class="field">
+            <label for="ibu">IBU</label>
+            <input id="ibu" type="text" inputmode="numeric" placeholder="opcional">
+          </div>
+          <div class="field span2">
+            <label for="country">País</label>
+            <input id="country" autocomplete="off" list="countryList" placeholder="Brasil">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Consumo</h2>
+        <div class="grid2">
+          <div class="field">
+            <label for="date">Data</label>
+            <input id="date" type="date">
+          </div>
+          <div class="field">
+            <label for="place">Local</label>
+            <input id="place" autocomplete="off" list="placeList" placeholder="Casa, bar…">
+          </div>
+        </div>
+        <div class="field">
+          <label>Embalagem</label>
+          <div class="chips" id="volumeChips"></div>
+          <input id="volumeOther" type="text" inputmode="numeric" placeholder="Outro volume (ml)" hidden>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>Quantidade</label>
+            <div class="stepper">
+              <button type="button" id="qtyMinus" aria-label="Diminuir">−</button>
+              <output id="qty">1</output>
+              <button type="button" id="qtyPlus" aria-label="Aumentar">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="price">Preço un. (R$)</label>
+            <input id="price" type="text" inputmode="decimal" placeholder="opcional">
+          </div>
+        </div>
+        <p class="hint" id="volumeTotal"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Avaliação</h2>
+          <label class="switch"><input type="checkbox" id="rateToggle" checked><span></span></label>
+        </div>
+
+        <div id="ratingBox">
+          <div class="overall">
+            <div class="overall-head">
+              <div>
+                <strong>Nota geral</strong>
+                <span class="hint">O quanto você gostou, 0 a 10</span>
+              </div>
+              <output id="overallOut" class="big-score">—</output>
+            </div>
+            <input type="range" id="overall" min="0" max="10" step="0.5" value="5" aria-label="Nota geral">
+          </div>
+
+          <h3>Fatores técnicos <span class="hint">0 a 5 · viram a nota técnica</span></h3>
+          <div id="factorInputs"></div>
+          <div class="tech-result">
+            Nota técnica <output id="techOut" class="big-score small">—</output>
+          </div>
+
+          <h3>Perfil de sabor <span class="hint">não entra na nota</span></h3>
+          <div id="descriptorInputs"></div>
+
+          <div class="field">
+            <label for="notes">Notas</label>
+            <textarea id="notes" rows="3" placeholder="O que chamou atenção, harmonização, beberia de novo?"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn" id="cancelAdd" hidden>Cancelar</button>
+        <button type="submit" class="btn primary">Salvar</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ══════════════ EXPLORAR ══════════════ -->
+  <section class="view" data-view="explore" hidden>
+    <div id="exploreEmpty" class="empty" hidden>
+      <div class="empty-art">📊</div>
+      <h2>Nada para explorar ainda</h2>
+      <p>Registre algumas cervejas e volte aqui para ver rankings, estatísticas e duelos.</p>
+    </div>
+
+    <div id="exploreContent">
+      <div class="stat-grid" id="statGrid"></div>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>🎲 Me sugere uma</h2>
+        </div>
+        <p class="hint">Sorteia entre as que você deu nota geral 7,5 ou mais.</p>
+        <div class="row">
+          <select id="pickStyle" aria-label="Estilo do sorteio"><option value="">Qualquer estilo</option></select>
+          <button type="button" class="btn primary" id="pickBtn">Sortear</button>
+        </div>
+        <div id="pickResult"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>🏆 Ranking</h2>
+          <select id="rankBy" class="mini-select" aria-label="Critério do ranking">
+            <option value="subjective">Nota geral</option>
+            <option value="technical">Nota técnica</option>
+          </select>
+        </div>
+        <select id="rankStyle" aria-label="Estilo do ranking"><option value="">Todos os estilos</option></select>
+        <ol id="rankList" class="rank"></ol>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>⚔️ Duelo</h2></div>
+        <div class="grid2">
+          <select id="duelA" aria-label="Cerveja A"></select>
+          <select id="duelB" aria-label="Cerveja B"></select>
+        </div>
+        <div id="duelResult"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>📅 Consumo por mês</h2>
+          <select id="monthMetric" class="mini-select" aria-label="Métrica">
+            <option value="liters">Litros</option>
+            <option value="count">Unidades</option>
+            <option value="distinct">Rótulos novos</option>
+          </select>
+        </div>
+        <div id="monthChart" class="chart-host"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>🎨 Por estilo</h2></div>
+        <table class="table" id="styleTable"></table>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>🤔 Gosto × técnica</h2></div>
+        <p class="hint">Onde a sua nota geral mais se afastou da nota técnica.</p>
+        <div id="divergeList" class="list compact"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ══════════════ AJUSTES ══════════════ -->
+  <section class="view" data-view="settings" hidden>
+    <section class="card">
+      <h2>Backup</h2>
+      <p class="hint">Os dados ficam só neste iPhone. Faça backup com frequência e salve em
+        <em>Arquivos</em> ou no iCloud Drive — se o app for removido, os dados vão junto.</p>
+      <p class="hint" id="lastBackup"></p>
+      <div class="stack">
+        <button type="button" class="btn primary" id="exportJson">Fazer backup (com fotos)</button>
+        <button type="button" class="btn" id="importJson">Restaurar backup</button>
+        <button type="button" class="btn" id="exportCsv">Exportar planilha (CSV)</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <p class="hint" id="storageInfo"></p>
+    </section>
+
+    <section class="card">
+      <h2>Como avaliar</h2>
+      <p class="hint">Duas notas, de propósito separadas:</p>
+      <ul class="plain">
+        <li><strong>Nota geral (0–10)</strong> — puramente o seu gosto. É a que manda no ranking e na biblioteca.</li>
+        <li><strong>Nota técnica (0–10)</strong> — calculada dos seis fatores abaixo, com pesos. Serve para comparar
+          com mais critério e para descobrir quando você gosta de algo “tecnicamente fraco” (e vice-versa).</li>
+      </ul>
+      <div id="scaleGuide"></div>
+      <p class="hint">Dica: avalie no copo, não na lata, e de preferência na temperatura certa do estilo.
+        O perfil de sabor (amargor, dulçor…) descreve a cerveja — não é bom nem ruim — e vira etiqueta
+        quando a média fica em <span id="tagThreshold"></span> ou mais.</p>
+    </section>
+
+    <section class="card">
+      <h2>Instalar no iPhone</h2>
+      <ol class="plain">
+        <li>Abra este endereço no <strong>Safari</strong>.</li>
+        <li>Toque em <strong>Compartilhar</strong> → <strong>Adicionar à Tela de Início</strong>.</li>
+        <li>Abra pelo ícone: fica em tela cheia e funciona sem internet.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Zona de perigo</h2>
+      <button type="button" class="btn danger" id="wipe">Apagar todos os dados</button>
+    </section>
+    <p class="hint center" id="versionInfo"></p>
+  </section>
+</main>
+
+<!-- ══════════════ DETALHE ══════════════ -->
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-bar">
+    <button type="button" class="icon-btn" id="sheetClose" aria-label="Voltar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <span id="sheetTitle"></span>
+    <button type="button" class="icon-btn" id="sheetEdit" aria-label="Editar cerveja">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>
+    </button>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<div id="photoViewer" class="photo-viewer" hidden><img alt=""></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<nav class="tabbar" aria-label="Navegação">
+  <button type="button" class="tab active" data-view="library">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4v16H5zM10 4h4v16h-4zM15.5 5l3.8-1 3 15.5-3.8 1z"/></svg>
+    <span>Biblioteca</span>
+  </button>
+  <button type="button" class="tab tab-main" data-view="add">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    <span>Registrar</span>
+  </button>
+  <button type="button" class="tab" data-view="explore">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+    <span>Explorar</span>
+  </button>
+  <button type="button" class="tab" data-view="settings">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+    <span>Ajustes</span>
+  </button>
+</nav>
+
+<datalist id="styleList"></datalist>
+<datalist id="breweryList"></datalist>
+<datalist id="countryList"></datalist>
+<datalist id="placeList"></datalist>
+
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>
