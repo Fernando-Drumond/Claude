@@ -4,6 +4,8 @@ App pessoal (PWA) para registrar peso, circunferências e dobras cutâneas, ver 
 evolução e receber lembretes das medições. Funciona offline, instala na tela inicial do
 celular e **guarda tudo apenas no aparelho** — não existe servidor nem conta.
 
+> Este repositório também tem o app **[Cervejas](cervejas/)**, com histórico e avaliação das cervejas que você bebe.
+
 ## Recursos
 
 - **Perfis ilimitados** — cada pessoa com histórico, altura, idade e cor próprios; troca pelo topo da tela.
